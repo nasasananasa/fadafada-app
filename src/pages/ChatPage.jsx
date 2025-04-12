@@ -63,6 +63,90 @@ export default function ChatPage() {
     if (!user || !input.trim()) return;
 
     const trimmedInput = input.trim();
+    let chatId = currentChatId;
+    let currentMessageType = chatType;
+
+    if (!chatId) {
+      const { data, error } = await supabase
+        .from('chats')
+        .insert([{ user_id: user.id, archived: false, type: chatType }])
+        .select();
+      if (error || !data || data.length === 0) return;
+      chatId = data[0].id;
+      setCurrentChatId(chatId);
+      setChats((prev) => [data[0], ...prev]);
+    }
+
+    // تحليل الرسالة إذا كانت من نوع therapy
+    if (chatType === 'therapy') {
+      try {
+        const res = await fetch("/api/openai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: trimmedInput,
+            mode: "analyze"
+          })
+        });
+        const data = await res.json();
+        if (data.therapy) {
+          currentMessageType = 'therapy';
+          await supabase.from('chats').update({ type: 'therapy' }).eq('id', chatId);
+          setChatType('therapy');
+        }
+      } catch (err) {
+        console.error("❌ تحليل الرسالة فشل:", err.message);
+      }
+    }
+
+    const userMessage = {
+      content: trimmedInput,
+      user_id: user.id,
+      role: 'user',
+      chat_type: currentMessageType,
+      chat_id: chatId
+    };
+
+    const { error: insertError } = await supabase.from('messages').insert([userMessage]);
+    if (!insertError) {
+      setMessages((prev) => [...prev, { ...userMessage, created_at: new Date().toISOString() }]);
+      setInput('');
+    }
+
+    try {
+      const response = await fetch("/api/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: trimmedInput,
+          mode: "respond",
+          model: currentMessageType === 'therapy' ? "gpt-4" : "gpt-3.5-turbo"
+        })
+      });
+
+      const data = await response.json();
+      const reply = data.reply;
+
+      if (reply) {
+        const assistantMessage = {
+          content: reply,
+          user_id: user.id,
+          role: 'assistant',
+          chat_type: currentMessageType,
+          chat_id: chatId
+        };
+        await supabase.from('messages').insert([assistantMessage]);
+        setMessages((prev) => [...prev, { ...assistantMessage, created_at: new Date().toISOString() }]);
+      }
+    } catch (err) {
+      console.error("❌ خطأ في الاتصال بـ OpenAI:", err.message);
+    }
+  };
+    const session = await supabase.auth.getSession();
+    const user = session.data?.session?.user;
+    if (!user || !input.trim()) return;
+
+    const trimmedInput = input.trim();
 
     let chatId = currentChatId;
 
