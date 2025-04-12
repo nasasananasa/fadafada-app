@@ -8,11 +8,10 @@ export default function ChatPage() {
   const [userId, setUserId] = useState(null);
   const [chats, setChats] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
-  const [newChatTitle, setNewChatTitle] = useState('');
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingChatTitle, setEditingChatTitle] = useState('');
   const [showArchived, setShowArchived] = useState(false);
-  const [showTitleInput, setShowTitleInput] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -61,17 +60,27 @@ export default function ChatPage() {
   const sendMessage = async () => {
     const session = await supabase.auth.getSession();
     const user = session.data?.session?.user;
-    if (!user || !currentChatId) return;
-    if (typeof input !== 'string' || input.trim() === '') return;
+    if (!user || !input.trim()) return;
 
     const trimmedInput = input.trim();
+
+    let chatId = currentChatId;
+
+    // إذا لم يكن هناك محادثة، ننشئها الآن
+    if (!chatId) {
+      const { data, error } = await supabase.from('chats').insert([{ user_id: user.id, archived: false }]).select();
+      if (error || !data || data.length === 0) return;
+      chatId = data[0].id;
+      setCurrentChatId(chatId);
+      setChats((prev) => [data[0], ...prev]);
+    }
 
     const userMessage = {
       content: trimmedInput,
       user_id: user.id,
       role: 'user',
       chat_type: chatType,
-      chat_id: currentChatId
+      chat_id: chatId
     };
 
     const { error } = await supabase.from('messages').insert([userMessage]);
@@ -99,26 +108,13 @@ export default function ChatPage() {
           user_id: user.id,
           role: 'assistant',
           chat_type: chatType,
-          chat_id: currentChatId
+          chat_id: chatId
         };
         await supabase.from('messages').insert([assistantMessage]);
         setMessages((prev) => [...prev, { ...assistantMessage, created_at: new Date().toISOString() }]);
       }
     } catch (err) {
       console.error("❌ خطأ في الاتصال بـ OpenAI:", err.message);
-    }
-  };
-
-  const createNewChat = async () => {
-    if (!userId) return;
-    const title = newChatTitle.trim() || null;
-    const { data, error } = await supabase.from('chats').insert([{ user_id: userId, title, archived: false }]).select();
-    if (!error && data.length > 0) {
-      setCurrentChatId(data[0].id);
-      setChats((prev) => [data[0], ...prev]);
-      setMessages([]);
-      setNewChatTitle('');
-      setShowTitleInput(false);
     }
   };
 
@@ -167,21 +163,18 @@ export default function ChatPage() {
     <div className="flex flex-col md:flex-row p-4 max-w-6xl mx-auto gap-4">
       <div className="md:w-1/4 bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-y-auto max-h-[500px]">
         <div className="mb-4">
-          {showTitleInput && !currentChatId && (
-            <input
-              type="text"
-              value={newChatTitle}
-              onChange={(e) => setNewChatTitle(e.target.value)}
-              placeholder="عنوان المحادثة الجديدة (اختياري)"
-              className="w-full p-2 mb-2 rounded border dark:bg-gray-800 dark:text-white"
-            />
+          {!isCreating && (
+            <button
+              onClick={() => {
+                setIsCreating(true);
+                setMessages([]);
+                setCurrentChatId(null);
+              }}
+              className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
+            >
+              ➕ إنشاء محادثة
+            </button>
           )}
-          <button
-            onClick={() => setShowTitleInput(true)}
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
-          >
-            ➕ إنشاء محادثة
-          </button>
           <button
             onClick={() => setShowArchived(!showArchived)}
             className="w-full py-1 px-4 bg-gray-700 text-white rounded text-sm"
@@ -242,7 +235,7 @@ export default function ChatPage() {
       </div>
 
       <div className="flex-1 space-y-4">
-        {currentChatId && (
+        {(currentChatId || isCreating) && (
           <>
             <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded h-96 overflow-y-auto">
               {messages.map((msg, index) => (
