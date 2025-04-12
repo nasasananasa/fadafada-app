@@ -166,6 +166,7 @@ export default function ChatPage() {
     <div className="flex flex-col md:flex-row p-4 max-w-6xl mx-auto gap-4">
       <div className="md:w-1/4 bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-y-auto max-h-[500px]">
         <div className="mb-4">
+          {!currentChatId && (
           <input
             type="text"
             value={newChatTitle}
@@ -173,6 +174,7 @@ export default function ChatPage() {
             placeholder="عنوان المحادثة الجديدة (اختياري)"
             className="w-full p-2 mb-2 rounded border dark:bg-gray-800 dark:text-white"
           />
+          )
           <button
             onClick={createNewChat}
             className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
@@ -186,6 +188,7 @@ export default function ChatPage() {
             {showArchived ? '👁️ عرض النشطة فقط' : '📦 عرض المؤرشفة'}
           </button>
         </div>
+        )}
 
         {chats.map((chat) => (
           <div key={chat.id} className={`mb-2 p-2 rounded ${chat.id === currentChatId ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800'}`}>
@@ -249,6 +252,7 @@ export default function ChatPage() {
           ))}
         </div>
 
+        {currentChatId && (
         <div className="flex gap-2">
           <textarea
             value={input}
@@ -262,6 +266,7 @@ export default function ChatPage() {
             إرسال
           </button>
         </div>
+        )}
       </div>
     </div>
   );
