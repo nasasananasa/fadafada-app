@@ -66,9 +66,11 @@ export default function ChatPage() {
 
     let chatId = currentChatId;
 
-    // إذا لم يكن هناك محادثة، ننشئها الآن
     if (!chatId) {
-      const { data, error } = await supabase.from('chats').insert([{ user_id: user.id, archived: false }]).select();
+      const { data, error } = await supabase
+        .from('chats')
+        .insert([{ user_id: user.id, archived: false }])
+        .select();
       if (error || !data || data.length === 0) return;
       chatId = data[0].id;
       setCurrentChatId(chatId);
@@ -212,21 +214,33 @@ export default function ChatPage() {
                 )}
               </div>
               <div className="ml-2 flex gap-1">
-                <button
-                  onClick={() => {
-                    setEditingChatId(chat.id);
-                    setEditingChatTitle(chat.title || '');
-                  }}
-                  className="text-xs bg-yellow-400 text-black px-2 rounded"
-                >✏️</button>
-                <button
-                  onClick={() => archiveChat(chat.id)}
-                  className="text-xs bg-gray-400 text-white px-2 rounded"
-                >📦</button>
-                <button
-                  onClick={() => deleteChat(chat.id)}
-                  className="text-xs bg-red-600 text-white px-2 rounded"
-                >🗑️</button>
+                {showArchived ? (
+                  <button
+                    onClick={async () => {
+                      await supabase.from('chats').update({ archived: false }).eq('id', chat.id);
+                      fetchChats(userId);
+                    }}
+                    className="text-xs bg-green-600 text-white px-2 rounded"
+                  >📤</button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setEditingChatId(chat.id);
+                        setEditingChatTitle(chat.title || '');
+                      }}
+                      className="text-xs bg-yellow-400 text-black px-2 rounded"
+                    >✏️</button>
+                    <button
+                      onClick={() => archiveChat(chat.id)}
+                      className="text-xs bg-gray-400 text-white px-2 rounded"
+                    >📦</button>
+                    <button
+                      onClick={() => deleteChat(chat.id)}
+                      className="text-xs bg-red-600 text-white px-2 rounded"
+                    >🗑️</button>
+                  </>
+                )}
               </div>
             </div>
           </div>
