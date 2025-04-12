@@ -163,18 +163,16 @@ export default function ChatPage() {
     <div className="flex flex-col md:flex-row p-4 max-w-6xl mx-auto gap-4">
       <div className="md:w-1/4 bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-y-auto max-h-[500px]">
         <div className="mb-4">
-          {!isCreating && (
-            <button
-              onClick={() => {
-                setIsCreating(true);
-                setMessages([]);
-                setCurrentChatId(null);
-              }}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
-            >
-              ➕ إنشاء محادثة
-            </button>
-          )}
+          <button
+            onClick={() => {
+              setIsCreating(true);
+              setMessages([]);
+              setCurrentChatId(null);
+            }}
+            className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
+          >
+            ➕ إنشاء محادثة
+          </button>
           <button
             onClick={() => setShowArchived(!showArchived)}
             className="w-full py-1 px-4 bg-gray-700 text-white rounded text-sm"
@@ -205,6 +203,7 @@ export default function ChatPage() {
                     onClick={() => {
                       setCurrentChatId(chat.id);
                       fetchMessages(chat.id);
+                      setIsCreating(false);
                     }}
                     className="cursor-pointer"
                   >
