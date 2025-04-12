@@ -12,6 +12,7 @@ export default function ChatPage() {
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingChatTitle, setEditingChatTitle] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [showTitleInput, setShowTitleInput] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -81,7 +82,7 @@ export default function ChatPage() {
     }
 
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch("http://localhost:3000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -166,7 +167,7 @@ export default function ChatPage() {
     <div className="flex flex-col md:flex-row p-4 max-w-6xl mx-auto gap-4">
       <div className="md:w-1/4 bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-y-auto max-h-[500px]">
         <div className="mb-4">
-          {!currentChatId && (
+          {!currentChatId && showTitleInput && (
           <input
             type="text"
             value={newChatTitle}
@@ -176,7 +177,7 @@ export default function ChatPage() {
           />
           )
           <button
-            onClick={createNewChat}
+            onClick={() => setShowTitleInput(true)}
             className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
           >
             ➕ إنشاء محادثة
@@ -242,6 +243,7 @@ export default function ChatPage() {
       </div>
 
       <div className="flex-1 space-y-4">
+        {currentChatId && (
         <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded h-96 overflow-y-auto">
           {messages.map((msg, index) => (
             <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
@@ -251,6 +253,7 @@ export default function ChatPage() {
             </div>
           ))}
         </div>
+        )}
 
         {currentChatId && (
         <div className="flex gap-2">
