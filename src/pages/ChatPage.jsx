@@ -62,7 +62,6 @@ export default function ChatPage() {
     const session = await supabase.auth.getSession();
     const user = session.data?.session?.user;
     if (!user || !currentChatId) return;
-
     if (typeof input !== 'string' || input.trim() === '') return;
 
     const trimmedInput = input.trim();
@@ -82,7 +81,7 @@ export default function ChatPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/chat", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -106,7 +105,7 @@ export default function ChatPage() {
         setMessages((prev) => [...prev, { ...assistantMessage, created_at: new Date().toISOString() }]);
       }
     } catch (err) {
-      console.error("❌ خطأ في الاتصال بالخادم المحلي:", err.message);
+      console.error("❌ خطأ في الاتصال بـ OpenAI:", err.message);
     }
   };
 
@@ -119,6 +118,7 @@ export default function ChatPage() {
       setChats((prev) => [data[0], ...prev]);
       setMessages([]);
       setNewChatTitle('');
+      setShowTitleInput(false);
     }
   };
 
@@ -167,15 +167,15 @@ export default function ChatPage() {
     <div className="flex flex-col md:flex-row p-4 max-w-6xl mx-auto gap-4">
       <div className="md:w-1/4 bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-y-auto max-h-[500px]">
         <div className="mb-4">
-          {!currentChatId && showTitleInput && (
-          <input
-            type="text"
-            value={newChatTitle}
-            onChange={(e) => setNewChatTitle(e.target.value)}
-            placeholder="عنوان المحادثة الجديدة (اختياري)"
-            className="w-full p-2 mb-2 rounded border dark:bg-gray-800 dark:text-white"
-          />
-          )
+          {showTitleInput && !currentChatId && (
+            <input
+              type="text"
+              value={newChatTitle}
+              onChange={(e) => setNewChatTitle(e.target.value)}
+              placeholder="عنوان المحادثة الجديدة (اختياري)"
+              className="w-full p-2 mb-2 rounded border dark:bg-gray-800 dark:text-white"
+            />
+          )}
           <button
             onClick={() => setShowTitleInput(true)}
             className="w-full py-2 px-4 bg-blue-600 text-white rounded mb-2"
@@ -189,7 +189,6 @@ export default function ChatPage() {
             {showArchived ? '👁️ عرض النشطة فقط' : '📦 عرض المؤرشفة'}
           </button>
         </div>
-        )}
 
         {chats.map((chat) => (
           <div key={chat.id} className={`mb-2 p-2 rounded ${chat.id === currentChatId ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800'}`}>
@@ -244,31 +243,31 @@ export default function ChatPage() {
 
       <div className="flex-1 space-y-4">
         {currentChatId && (
-        <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded h-96 overflow-y-auto">
-          {messages.map((msg, index) => (
-            <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-              <span className="inline-block px-3 py-2 rounded bg-white dark:bg-gray-700 whitespace-pre-wrap">
-                {msg.content}
-              </span>
+          <>
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded h-96 overflow-y-auto">
+              {messages.map((msg, index) => (
+                <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                  <span className="inline-block px-3 py-2 rounded bg-white dark:bg-gray-700 whitespace-pre-wrap">
+                    {msg.content}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        )}
 
-        {currentChatId && (
-        <div className="flex gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full p-2 rounded border dark:bg-gray-900 dark:text-white"
-            placeholder="اكتب رسالتك..."
-            rows={2}
-          />
-          <button onClick={sendMessage} className="bg-blue-600 text-white px-4 rounded">
-            إرسال
-          </button>
-        </div>
+            <div className="flex gap-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full p-2 rounded border dark:bg-gray-900 dark:text-white"
+                placeholder="اكتب رسالتك..."
+                rows={2}
+              />
+              <button onClick={sendMessage} className="bg-blue-600 text-white px-4 rounded">
+                إرسال
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
