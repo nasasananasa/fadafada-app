@@ -5,7 +5,7 @@ export default function TestOpenAIPage() {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const testAnalyze = async () => {
+  const sendMessage = async () => {
     if (!message.trim()) return;
     setLoading(true);
     try {
@@ -34,7 +34,7 @@ export default function TestOpenAIPage() {
         rows={4}
       />
       <button
-        onClick={testAnalyze}
+        onClick={sendMessage}
         disabled={loading}
         className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
       >
