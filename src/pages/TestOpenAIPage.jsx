@@ -35,15 +35,17 @@ export default function TestOpenAIPage() {
       />
       <button
         onClick={testAnalyze}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
         disabled={loading}
+        className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
       >
-        {loading ? 'جاري التحليل...' : '🔍 تحليل الرسالة'}
+        {loading ? 'جاري التحليل...' : 'تحليل'}
       </button>
       {response && (
-        <div className="mt-4 p-3 border rounded bg-gray-100">
-          <pre>{JSON.stringify(response, null, 2)}</pre>
-        </div>
+        <pre className="bg-gray-100 p-2 rounded text-sm">
+          {typeof response === 'string'
+            ? response
+            : JSON.stringify(response, null, 2)}
+        </pre>
       )}
     </div>
   );
